@@ -1,54 +1,51 @@
 import numpy as np
-from math import ceil
+from const import (lms2lmsd, lms2lmsp, lms2lmst, lms2rgb, err2mod, rgb2lms)
 
 
-def color_blind_it(img, color):
-    colors_dict = {"R": 0, "G": 1, "B": 2}
-    mask = np.zeros(img.shape[:-1])
-    cb_img = np.copy(img)
-    cb_img[:, :, colors_dict[color]] = mask
-    return cb_img
+def space_conversion(origin, matrix):
+    destination = np.zeros_like(origin)
+    for i in range(origin.shape[0]):
+        for j in range(origin.shape[1]):
+            origin_px = origin[i, j, :3]
+            destination[i, j, :3] = np.dot(matrix, origin_px)
+    return destination
 
 
-def chromashift(img):
-    # first matrix implementation adapted from https://github.com/reidjason/ChromaShift/blob/master/chromashift.py
-    width = img.shape[0]
-    height = img.shape[1]
-    corrected_img = np.copy(img)
+def sim_defect(lms, defect):
+    if defect == 'd':
+        lms_defect = space_conversion(lms, lms2lmsd)
+    elif defect == 'p':
+        lms_defect = space_conversion(lms, lms2lmsp)
+    elif defect == 't':
+        lms_defect = space_conversion(lms, lms2lmst)
+    return lms_defect
 
 
-    for x in range(width):
-        for y in range(height):
-            oldValue = img[x, y]
+def compare(true, defect):
+    error = (true - defect)
+    return error
 
-            oldRed = oldValue[0]
-            oldGreen = oldValue[1]
-            oldBlue = oldValue[2]
 
-            longValue = (17.8824 * oldRed) + (43.5161 * oldGreen) + (4.11935 * oldBlue)
-            medValue = (3.45565 * oldRed) + (27.1554 * oldGreen) + (3.86714 * oldBlue)
-            shortValue = (0.0299566 * oldRed) + (0.184309 * oldGreen) + (1.46709 * oldBlue)
+def daltonize(rgb, rgb_defect, matrix):
+    error = compare(rgb, rgb_defect)
+    delta = space_conversion(error, matrix)
+    dtpn = delta + rgb
 
-            longValue = (1 * longValue) + (0 * medValue) + (0 * shortValue)
-            medValue = (0.494207 * longValue) + (0 * medValue) + (1.24827 * shortValue)
-            shortValue = (0 * longValue) + (0 * medValue) + (1 * shortValue)
+    for i in range(rgb.shape[0]):
+        for j in range(rgb.shape[1]):
+            dtpn[i, j, 0] = max(0, dtpn[i, j, 0])
+            dtpn[i, j, 0] = min(255, dtpn[i, j, 0])
+            dtpn[i, j, 1] = max(0, dtpn[i, j, 1])
+            dtpn[i, j, 1] = min(255, dtpn[i, j, 1])
+            dtpn[i, j, 2] = max(0, dtpn[i, j, 2])
+            dtpn[i, j, 2] = min(255, dtpn[i, j, 2])
 
-            newRed = (0.0809444479 * longValue) + (-0.130504409 * medValue) + (0.116721066 * shortValue)
-            newGreen = (-0.0102485335 * longValue) + (0.0540193266 * medValue) + (-0.113614708 * shortValue)
-            newBlue = (-0.000365296938 * longValue) + (-0.00412161469 * medValue) + (0.693511405 * shortValue)
+    return dtpn.astype('uint8')
 
-            newRed = oldRed - newRed
-            newGreen = oldGreen - newGreen
-            newBlue = oldBlue - newBlue
 
-            newRed = (1.0 * newRed) + (0.7 * newGreen) + (0.0 * newBlue)
-            newGreen = (0.0 * newRed) + (0.0 * newGreen) + (0.0 * newBlue)
-            newBlue = (0.0 * newRed) + (0.7 * newGreen) + (1.0 * newBlue)
-
-            newRed = int(ceil(newRed + oldRed))
-            newGreen = int(ceil(newGreen + oldGreen))
-            newBlue = int(ceil(newBlue + oldBlue))
-
-            corrected_img[x, y] = (newRed, newGreen, newBlue)
-
-    return corrected_img
+def test_pipeline(rgb):
+    lms = space_conversion(rgb, rgb2lms)
+    lms_defect = sim_defect(lms, "p")
+    rgb_defect = space_conversion(lms_defect, lms2rgb)
+    corrected = daltonize(rgb, rgb_defect, err2mod)
+    return corrected
