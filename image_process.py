@@ -15,6 +15,8 @@ def chromashift(img):
     width = img.shape[0]
     height = img.shape[1]
     corrected_img = np.copy(img)
+
+
     for x in range(width):
         for y in range(height):
             oldValue = img[x, y]
