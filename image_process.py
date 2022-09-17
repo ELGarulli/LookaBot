@@ -1,6 +1,6 @@
 import numpy as np
 from math import ceil
-from const import (lms2lmsd, lms2lmsp, lms2lmst, lms2rgb, err2mod)
+from const import (lms2lmsd, lms2lmsp, lms2lmst, lms2rgb, err2mod, rgb2lms)
 
 
 def color_blind_it(img, color):
@@ -53,14 +53,14 @@ def space_conversion(origin, matrix):
     return destination
 
 
-def sim_defect(rgb, defect):
+def sim_defect(lms, defect):
     if defect == 'd':
-        lms = space_conversion(rgb, lms2lmsd)
+        lms_defect = space_conversion(lms, lms2lmsd)
     elif defect == 'p':
-        lms = space_conversion(rgb, lms2lmsp)
+        lms_defect = space_conversion(lms, lms2lmsp)
     elif defect == 't':
-        lms = space_conversion(rgb, lms2lmst)
-    return lms
+        lms_defect = space_conversion(lms, lms2lmst)
+    return lms_defect
 
 
 def compare(true, defect):
@@ -90,7 +90,8 @@ def daltonize(rgb, rgb_defect, matrix):
 
 
 def test_pipeline(rgb):
-    lms_defect = sim_defect(rgb, "p")
+    lms = space_conversion(rgb, rgb2lms)
+    lms_defect = sim_defect(lms, "p")
     rgb_defect = space_conversion(lms_defect, lms2rgb)
     corrected = daltonize(rgb, rgb_defect, err2mod)
     return corrected
