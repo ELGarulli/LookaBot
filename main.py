@@ -2,17 +2,21 @@ import skimage, skimage.io
 from io import BytesIO
 import responses as resp
 import api_key as key
-from telegram import ForceReply, Update
+from telegram import ForceReply, Update, KeyboardButton, ReplyKeyboardMarkup
 from telegram.ext import CommandHandler, ContextTypes, MessageHandler, Filters, Updater, CallbackContext
 from image_process import test_pipeline
 import numpy as np
 import cv2
 from PIL import Image
+
 print("Bot started...")
 
 
 def start_command(update, context):
-    update.message.reply_text("Type something random to get started.")
+    #update.message.reply_text("Type something random to get started.")
+    buttons = [[KeyboardButton("Deuteranopia")], [KeyboardButton("Protanopia")], [KeyboardButton("Tritanopia")]]
+    context.bot.send_message(chat_id=update.effective_chat.id, text="Choose your type of colorblindness",
+                             reply_markup=ReplyKeyboardMarkup(buttons))
 
 
 def help_command(update, context):
@@ -20,10 +24,11 @@ def help_command(update, context):
 
 
 def handle_message(update, context):
-    text = str(update.message.text).lower()  # receives text from user
-    response = resp.sample_responses(text)  # processes text from user
+    text = str(update.message.text).lower()
+    response = resp.sample_responses(text)
 
-    update.message.reply_text(response)  # gives back response to user
+    update.message.reply_text(response)
+
 
 
 def handle_photo(update: Update, context: CallbackContext):
