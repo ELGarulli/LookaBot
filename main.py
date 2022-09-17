@@ -39,18 +39,18 @@ def handle_message(update, context):
 def handle_photo(update: Update, context: CallbackContext):
     file = context.bot.get_file(update.message.photo[-1].file_id)
     f = BytesIO(file.download_as_bytearray())
+
     file_bytes = np.asarray(bytearray(f.read()), dtype=np.uint8)
     image = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
-    convert_rgb = Image.fromarray(image, mode="RGB")
-    rgb = np.asarray(convert_rgb, dtype=float)
-    result = test_pipeline(rgb)
+    im = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
+    rgb = np.asarray(im, dtype=float)
+
+    result = test_pipeline(rgb)
+    result = np.flip(result, 2)
     is_success, buffer = cv2.imencode(".png", result)
     bytes_im = buffer.tobytes()
-    # context.bot.send_message(chat_id=update.message.chat_id, text=result.shape)
-    # context.bot.send_message(chat_id=update.message.chat_id, text=result)
     context.bot.send_photo(chat_id=update.message.chat_id, photo=bytes_im)
-    # update.message.reply_photo(result)
 
 
 def error(update, context):
