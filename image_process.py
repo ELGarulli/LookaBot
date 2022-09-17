@@ -40,12 +40,12 @@ def daltonize(rgb, rgb_defect, matrix):
             dtpn[i, j, 2] = max(0, dtpn[i, j, 2])
             dtpn[i, j, 2] = min(255, dtpn[i, j, 2])
 
-    return dtpn.astype('uint8')
+    return dtpn
 
 
 def test_pipeline(rgb):
     lms = space_conversion(rgb, rgb2lms)
-    lms_defect = sim_defect(lms, "p")
+    lms_defect = sim_defect(lms, "d")
     rgb_defect = space_conversion(lms_defect, lms2rgb)
     corrected = daltonize(rgb, rgb_defect, err2mod)
     return corrected
