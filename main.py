@@ -44,7 +44,7 @@ def error(update, context):
     print(f"Update {update} caused error {context.error}")
 
 
-def main():
+def lookabot():
     updater = Updater(key.API_KEY, use_context=True)
     photo_handler = MessageHandler(Filters.photo, handle_photo)
     dp = updater.dispatcher
@@ -60,4 +60,4 @@ def main():
     updater.idle
 
 
-main()
+lookabot()

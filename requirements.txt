@@ -17,3 +17,8 @@ tifffile==2022.8.12
 tornado==6.1
 tzdata==2022.2
 tzlocal==4.2
+
+
+# gcloud functions deploy telegram_bot --set-env-vars "TELEGRAM_TOKEN=5469445991:AAE2aE629r35ORTdW6fsoPh3U1S8RFmciLI" --runtime python39 --trigger-http --project=erudite-cycle-362809
+
+# curl "https://api.telegram.org/bot5469445991:AAE2aE629r35ORTdW6fsoPh3U1S8RFmciLI/setWebhook?url=<URL>"
