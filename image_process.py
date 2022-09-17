@@ -1,5 +1,6 @@
 import numpy as np
 from math import ceil
+from const import (lms2lmsd, lms2lmsp, lms2lmst, lms2rgb, err2mod)
 
 
 def color_blind_it(img, color):
@@ -9,44 +10,87 @@ def color_blind_it(img, color):
     cb_img[:, :, colors_dict[color]] = mask
     return cb_img
 
+def srgb2lin(s):
+    if s <= 0.0404482362771082:
+        lin = s / 12.92
+    else:
+        lin = pow(((s + 0.055) / 1.055), 2.4)
+    return lin
 
-def chromashift(img):
-    # first matrix implementation adapted from https://github.com/reidjason/ChromaShift/blob/master/chromashift.py
-    width = img.shape[0]
-    height = img.shape[1]
-    corrected_img = np.copy(img)
-    for x in range(width):
-        for y in range(height):
-            oldValue = img[x, y]
 
-            oldRed = oldValue[0]
-            oldGreen = oldValue[1]
-            oldBlue = oldValue[2]
+def lin2srgb(lin):
+    if lin > 0.0031308:
+        s = 1.055 * (pow(lin, (1.0 / 2.4))) - 0.055
+    else:
+        s = 12.92 * lin
+    return s
 
-            longValue = (17.8824 * oldRed) + (43.5161 * oldGreen) + (4.11935 * oldBlue)
-            medValue = (3.45565 * oldRed) + (27.1554 * oldGreen) + (3.86714 * oldBlue)
-            shortValue = (0.0299566 * oldRed) + (0.184309 * oldGreen) + (1.46709 * oldBlue)
+def degammafy(origin):
+    # adapted from https://stackoverflow.com/questions/34472375/linear-to-srgb-conversion
+    destination = np.zeros_like(origin)
+    for i in range(origin.shape[0]):
+        for j in range(origin.shape[1]):
+            for z in range(3):
+                destination[i,j,z] = srgb2lin(origin[i,j,z])
+    return destination
 
-            longValue = (1 * longValue) + (0 * medValue) + (0 * shortValue)
-            medValue = (0.494207 * longValue) + (0 * medValue) + (1.24827 * shortValue)
-            shortValue = (0 * longValue) + (0 * medValue) + (1 * shortValue)
 
-            newRed = (0.0809444479 * longValue) + (-0.130504409 * medValue) + (0.116721066 * shortValue)
-            newGreen = (-0.0102485335 * longValue) + (0.0540193266 * medValue) + (-0.113614708 * shortValue)
-            newBlue = (-0.000365296938 * longValue) + (-0.00412161469 * medValue) + (0.693511405 * shortValue)
+def gammafy(origin):
+    destination = np.zeros_like(origin)
+    for i in range(origin.shape[0]):
+        for j in range(origin.shape[1]):
+            for z in range(3):
+                destination[i, j, z] = lin2srgb(origin[i, j, z])
+    return destination
 
-            newRed = oldRed - newRed
-            newGreen = oldGreen - newGreen
-            newBlue = oldBlue - newBlue
 
-            newRed = (1.0 * newRed) + (0.7 * newGreen) + (0.0 * newBlue)
-            newGreen = (0.0 * newRed) + (0.0 * newGreen) + (0.0 * newBlue)
-            newBlue = (0.0 * newRed) + (0.7 * newGreen) + (1.0 * newBlue)
+def space_conversion(origin, matrix):
+    destination = np.zeros_like(origin)
+    for i in range(origin.shape[0]):
+        for j in range(origin.shape[1]):
+            origin_px = origin[i, j, :3]
+            destination[i, j, :3] = np.dot(matrix, origin_px)
+    return destination
 
-            newRed = int(ceil(newRed + oldRed))
-            newGreen = int(ceil(newGreen + oldGreen))
-            newBlue = int(ceil(newBlue + oldBlue))
 
-            corrected_img[x, y] = (newRed, newGreen, newBlue)
+def sim_defect(rgb, defect):
+    if defect == 'd':
+        lms = space_conversion(rgb, lms2lmsd)
+    elif defect == 'p':
+        lms = space_conversion(rgb, lms2lmsp)
+    elif defect == 't':
+        lms = space_conversion(rgb, lms2lmst)
+    return lms
 
-    return corrected_img
+
+def compare(true, defect):
+    error = (true - defect)
+    return error
+
+
+def daltonize(rgb, rgb_defect, matrix):
+    error = compare(rgb, rgb_defect)
+    delta = np.zeros_like(rgb)
+    for i in range(rgb.shape[0]):
+        for j in range(rgb.shape[1]):
+            err = error[i, j, :3]
+            delta[i, j, :3] = np.dot(matrix, err)
+    dtpn = delta + rgb
+
+    for i in range(rgb.shape[0]):
+        for j in range(rgb.shape[1]):
+            dtpn[i, j, 0] = max(0, dtpn[i, j, 0])
+            dtpn[i, j, 0] = min(255, dtpn[i, j, 0])
+            dtpn[i, j, 1] = max(0, dtpn[i, j, 1])
+            dtpn[i, j, 1] = min(255, dtpn[i, j, 1])
+            dtpn[i, j, 2] = max(0, dtpn[i, j, 2])
+            dtpn[i, j, 2] = min(255, dtpn[i, j, 2])
+
+    return dtpn
+
+
+def test_pipeline(rgb):
+    lms_defect = sim_defect(rgb, "p")
+    rgb_defect = space_conversion(lms_defect, lms2rgb)
+    corrected = daltonize(rgb, rgb_defect, err2mod)
+    return corrected
