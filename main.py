@@ -2,13 +2,12 @@ import skimage, skimage.io
 from io import BytesIO
 import responses as resp
 import api_key as key
-from telegram import ForceReply, Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import CommandHandler, ContextTypes, MessageHandler, Filters, Updater, CallbackContext, \
-    CallbackQueryHandler
+from telegram import ForceReply, Update
+from telegram.ext import CommandHandler, ContextTypes, MessageHandler, Filters, Updater, CallbackContext
 from image_process import test_pipeline
 import numpy as np
 import cv2
-
+from PIL import Image
 print("Bot started...")
 
 
@@ -27,27 +26,15 @@ def handle_message(update, context):
     update.message.reply_text(response)  # gives back response to user
 
 
-# def get_url():
-# contents = requests.get('https://random.dog/woof.json').json()
-# url = contents['url']
-# return url
-
-# def bop_command(update, context):
-# file = context.bot.get_file(update.message.photo[-1].file_id)
-# f = BytesIO(file.download_as_bytearray())
-# f = skimage.io.imread(f)
-# url = get_url()
-# chat_id = update.message.chat_id
-# update.message.send_photo(chat_id=chat_id, photo=url)
-
-
 def handle_photo(update: Update, context: CallbackContext):
     file = context.bot.get_file(update.message.photo[-1].file_id)
     f = BytesIO(file.download_as_bytearray())
     file_bytes = np.asarray(bytearray(f.read()), dtype=np.uint8)
     image = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
+    convert_rgb = Image.fromarray(image, mode="RGB")
+    rgb = np.asarray(convert_rgb, dtype=float)
+    result = test_pipeline(rgb)
 
-    result = test_pipeline(image)
     is_success, buffer = cv2.imencode(".png", result)
     bytes_im = buffer.tobytes()
     # context.bot.send_message(chat_id=update.message.chat_id, text=result.shape)
@@ -66,7 +53,6 @@ def main():
 
     dp.add_handler(CommandHandler("start", start_command))
     dp.add_handler(CommandHandler("help", help_command))
-    # dp.add_handler(CommandHandler("bop", bop_command))
     dp.add_handler(MessageHandler(Filters.text, handle_message))
     dp.add_handler(MessageHandler(Filters.photo, handle_photo))
 
