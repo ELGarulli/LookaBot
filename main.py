@@ -4,7 +4,7 @@ import responses as resp
 import api_key as key
 from telegram import ForceReply, Update
 from telegram.ext import CommandHandler, ContextTypes, MessageHandler, Filters, Updater, CallbackContext
-from image_process import color_blind_it
+from image_process import chromashift
 import numpy as np
 import cv2
 
@@ -46,7 +46,7 @@ def handle_photo(update: Update, context: CallbackContext):
     file_bytes = np.asarray(bytearray(f.read()), dtype=np.uint8)
     image = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
 
-    result = color_blind_it(image, "R")
+    result = chromashift(image)
     is_success, buffer = cv2.imencode(".png",result)
     bytes_im = buffer.tobytes()
     # context.bot.send_message(chat_id=update.message.chat_id, text=result.shape)
