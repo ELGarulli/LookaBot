@@ -128,7 +128,4 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-#Pycharm stuff
 .idea/*
-
-api_key.py
