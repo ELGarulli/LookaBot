@@ -2,8 +2,9 @@ import skimage, skimage.io
 from io import BytesIO
 import responses as resp
 import api_key as key
-from telegram import ForceReply, Update
-from telegram.ext import CommandHandler, ContextTypes, MessageHandler, Filters, Updater, CallbackContext
+from telegram import ForceReply, Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import CommandHandler, ContextTypes, MessageHandler, Filters, Updater, CallbackContext, \
+    CallbackQueryHandler
 from image_process import test_pipeline
 import numpy as np
 import cv2
@@ -47,7 +48,7 @@ def handle_photo(update: Update, context: CallbackContext):
     image = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
 
     result = test_pipeline(image)
-    is_success, buffer = cv2.imencode(".png",result)
+    is_success, buffer = cv2.imencode(".png", result)
     bytes_im = buffer.tobytes()
     # context.bot.send_message(chat_id=update.message.chat_id, text=result.shape)
     # context.bot.send_message(chat_id=update.message.chat_id, text=result)
