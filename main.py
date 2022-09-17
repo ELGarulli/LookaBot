@@ -3,17 +3,19 @@ from io import BytesIO
 import responses as resp
 import api_key as key
 from telegram import ForceReply, Update, KeyboardButton, ReplyKeyboardMarkup
-from telegram.ext import CommandHandler, ContextTypes, MessageHandler, Filters, Updater, CallbackContext
+from telegram.ext import CommandHandler, MessageHandler, Filters, Updater, CallbackContext, PicklePersistence
 from image_process import test_pipeline
 import numpy as np
 import cv2
 from PIL import Image
+from const import color_blindness
+from uuid import uuid4
+
 
 print("Bot started...")
 
 
 def start_command(update, context):
-    #update.message.reply_text("Type something random to get started.")
     buttons = [[KeyboardButton("Deuteranopia")], [KeyboardButton("Protanopia")], [KeyboardButton("Tritanopia")]]
     context.bot.send_message(chat_id=update.effective_chat.id, text="Choose your type of colorblindness",
                              reply_markup=ReplyKeyboardMarkup(buttons))
@@ -24,11 +26,14 @@ def help_command(update, context):
 
 
 def handle_message(update, context):
+    key_ = str(uuid4())
     text = str(update.message.text).lower()
     response = resp.sample_responses(text)
-
-    update.message.reply_text(response)
-
+    if response in ("t", "d", "p"):
+        context.user_data[key_] = response
+        update.message.reply_text("Ok! I set your preference to " + color_blindness[response])
+    else:
+        update.message.reply_text(response)
 
 
 def handle_photo(update: Update, context: CallbackContext):
@@ -53,7 +58,7 @@ def error(update, context):
 
 
 def lookabot():
-    updater = Updater(key.API_KEY, use_context=True)
+    updater = Updater(key.API_KEY, persistence=PicklePersistence(filename='user_data'), use_context=True)
     dp = updater.dispatcher
 
     dp.add_handler(CommandHandler("start", start_command))

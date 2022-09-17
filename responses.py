@@ -10,14 +10,16 @@ def sample_responses(input_text):
 
     if user_message in ("deuteranopia"):
         defect = "d"
-        return "You've set your colorblindness to Deuteranopia"
+        return defect
     if user_message in ("protanopia"):
         defect = "p"
-        return "You've set your colorblindness to Protanopia"
+        return defect
     if user_message in ("tritanopia"):
         defect = "t"
-        return "You've set your colorblindness to Tritanopia"
+        return defect
 
     return "I don't understand"
+
+
 
 
