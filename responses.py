@@ -17,7 +17,3 @@ def sample_responses(input_text):
         return defect
 
     return "I don't understand"
-
-
-
-

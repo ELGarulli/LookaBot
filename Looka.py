@@ -12,7 +12,6 @@ import responses as resp
 from const import color_blindness
 from image_process import lookap
 
-
 print("Bot started...")
 
 
