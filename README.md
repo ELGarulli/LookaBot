@@ -14,7 +14,7 @@ We made a really simple chatbot on telegram, and we backed it up with some visio
 
 You select the type of color deficiency you have, you send a picture and Lookabot optimizes the colors to help you to choose the ripe apples (and every other fruit for that matter).
 
-That's it, no world saving this time around, but it can actually be helpful (to a lot of people! 300m, did we mention that?)
+That's it, no world saving this time around, just something that can be helpful (to a lot of people! 300m, did we mention that?)
 
 
 ## How to try it out?
