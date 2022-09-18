@@ -1,16 +1,16 @@
-import skimage, skimage.io
-from io import BytesIO
-import responses as resp
-import api_key as key
-from telegram import ForceReply, Update, KeyboardButton, ReplyKeyboardMarkup
-from telegram.ext import CommandHandler, MessageHandler, Filters, Updater, CallbackContext, PicklePersistence
-from image_process import lookap
-import numpy as np
-import cv2
-from PIL import Image
-from const import color_blindness
-from uuid import uuid4
 from functools import partial
+from io import BytesIO
+from uuid import uuid4
+
+import cv2
+import numpy as np
+from telegram import Update, KeyboardButton, ReplyKeyboardMarkup
+from telegram.ext import CommandHandler, MessageHandler, Filters, Updater, CallbackContext, PicklePersistence
+
+import api_key as key
+import responses as resp
+from const import color_blindness
+from image_process import lookap
 
 
 print("Bot started...")

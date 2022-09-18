@@ -1,4 +1,5 @@
 import numpy as np
+
 from const import (lms2lmsd, lms2lmsp, lms2lmst, lms2rgb, err2mod, rgb2lms)
 
 
