@@ -43,9 +43,9 @@ def daltonize(rgb, rgb_defect, matrix):
     return dtpn
 
 
-def test_pipeline(rgb):
+def lookap(rgb, defect):
     lms = space_conversion(rgb, rgb2lms)
-    lms_defect = sim_defect(lms, "d")
+    lms_defect = sim_defect(lms, defect)
     rgb_defect = space_conversion(lms_defect, lms2rgb)
     corrected = daltonize(rgb, rgb_defect, err2mod)
     return corrected

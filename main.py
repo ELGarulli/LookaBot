@@ -4,12 +4,13 @@ import responses as resp
 import api_key as key
 from telegram import ForceReply, Update, KeyboardButton, ReplyKeyboardMarkup
 from telegram.ext import CommandHandler, MessageHandler, Filters, Updater, CallbackContext, PicklePersistence
-from image_process import test_pipeline
+from image_process import lookap
 import numpy as np
 import cv2
 from PIL import Image
 from const import color_blindness
 from uuid import uuid4
+from functools import partial
 
 
 print("Bot started...")
@@ -25,8 +26,7 @@ def help_command(update, context):
     update.message.reply_text("I can't even help myself.")
 
 
-def handle_message(update, context):
-    key_ = str(uuid4())
+def handle_message(update, context, key_):
     text = str(update.message.text).lower()
     response = resp.sample_responses(text)
     if response in ("t", "d", "p"):
@@ -36,7 +36,8 @@ def handle_message(update, context):
         update.message.reply_text(response)
 
 
-def handle_photo(update: Update, context: CallbackContext):
+def handle_photo(update: Update, context: CallbackContext, key_):
+    defect = context.user_data[key_]
     file = context.bot.get_file(update.message.photo[-1].file_id)
     f = BytesIO(file.download_as_bytearray())
 
@@ -46,7 +47,7 @@ def handle_photo(update: Update, context: CallbackContext):
 
     rgb = np.asarray(im, dtype=float)
 
-    result = test_pipeline(rgb)
+    result = lookap(rgb, defect)
     result = np.flip(result, 2)
     is_success, buffer = cv2.imencode(".png", result)
     bytes_im = buffer.tobytes()
@@ -61,10 +62,11 @@ def lookabot():
     updater = Updater(key.API_KEY, persistence=PicklePersistence(filename='user_data'), use_context=True)
     dp = updater.dispatcher
 
+    key_ = str(uuid4())
     dp.add_handler(CommandHandler("start", start_command))
     dp.add_handler(CommandHandler("help", help_command))
-    dp.add_handler(MessageHandler(Filters.text, handle_message))
-    dp.add_handler(MessageHandler(Filters.photo, handle_photo))
+    dp.add_handler(MessageHandler(Filters.text, partial(handle_message, key_=key_)))
+    dp.add_handler(MessageHandler(Filters.photo, partial(handle_photo, key_=key_)))
 
     dp.add_error_handler(error)
 
